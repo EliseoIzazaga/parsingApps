@@ -21,10 +21,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.dates as mdates
 import pandas as pd
+from matplotlib.text import OffsetFrom
 timeOnXAxisFormat = mdates.DateFormatter("%H:%M:%S")
 
-locationInDrive = r"C:\Users\EIzazaga\OneDrive - Arlo Technologies, Inc\Desktop\BATTERY\A14\PRO5\INDOOR\Termination current set at 250mA\\"  #folder containing the logs 
-specificLog = "BAT1 A9M1257FA01F9 250mA Termination Current"        #log name without file extention (no .txt or .png)
+locationInDrive = r"C:\Users\EIzazaga\OneDrive - Arlo Technologies, Inc\Desktop\BATTERY\A14\PRO5\INDOOR\Terminationcurrentsetat250mA\\"  #folder containing the logs 
+specificLog = "BAT3 A9M1257FA01F9 250mA Termination Current"        #log name without file extention (no .txt or .png)
 toProcess = locationInDrive + specificLog + ".txt"  #this outputs a parsed log with the name PARTSED
 toPlot = locationInDrive + specificLog + ".png"
 plotTitle = specificLog    #chart title will be log name, temp, bat type.     
@@ -55,6 +56,13 @@ BAT_CUR = []
 TEMP = []
 PERC = []
 VOLT = []
+
+
+def findIndexOfList(searchingFor, inList):
+    for i in range(len(inList)):
+        if searchingFor == inList[i]:
+            return i
+
 def toInt(inList):
     ret = [eval(i) for i in inList]
     return ret
@@ -68,7 +76,7 @@ def sanitizeTimeStamps(timeStampList):#This is to clean up and sanitize the time
         tempList = []
         tempList = manipString.split(' ')
         #print(tempList)
-        sanitizedList[x] = tempList[3]  #if you are having time stamp issues this the the number to change, 1 or 3
+        sanitizedList[x] = tempList[1]  #if you are having time stamp issues this the the number to change, 1 or 3
         manipString = sanitizedList[x]
 
         manipString = str(manipString)
@@ -123,7 +131,7 @@ with open(logToOpen, encoding="ANSI") as inFile:
             dataList = read_data.split(",")
             #print(len(dataList))
             #print(dataList)
-            if len(dataList) == 20:
+            if len(dataList) == 21:
                 with open(directoryToSaveNewParsedLog, 'a') as fp:
                     fp.writelines(str(dataList))
                     fp.write("\n")
@@ -141,11 +149,28 @@ with open(logToOpen, encoding="ANSI") as inFile:
     VOLT = toInt(VOLT)
 
 
-    print(timeStamps)
-    print(BAT_CUR)
-    print(TEMP)
-    print(PERC)
-    print(VOLT)
+    #print(timeStamps)
+    #print(BAT_CUR)
+    #print(TEMP)
+    #print(PERC)
+    #print(VOLT)
+
+    #print(findIndexOfList(750, BAT_CUR))
+    sevenfiftymAindex = findIndexOfList(750, BAT_CUR)
+    #print(str(BAT_CUR[sevenfiftymAindex])+" " + str(timeStamps[sevenfiftymAindex]) )
+    #print(findIndexOfList(670, BAT_CUR))
+    sixseventymAindex = findIndexOfList(670, BAT_CUR)
+    #print(str(BAT_CUR[sixseventymAindex]) + " "+ str(timeStamps[sixseventymAindex]))
+    #print(findIndexOfList(500, BAT_CUR))
+    fivehundredmAindex = findIndexOfList(500, BAT_CUR)
+    #print(str(BAT_CUR[fivehundredmAindex])+ " " +str(timeStamps[fivehundredmAindex]))
+    #print(findIndexOfList(250, BAT_CUR))
+    twofiftymAindex = findIndexOfList(250, BAT_CUR)
+    #print(str(BAT_CUR[twofiftymAindex]) + " "+ str(timeStamps[twofiftymAindex]))
+
+    print(sevenfiftymAindex)
+
+
 
 
 ######################################################################################plotting########################################################
@@ -168,7 +193,7 @@ p1, = host.plot(BAT_CUR,   label="Current")
 p1, = host.plot(VOLT,   label="Voltage")
 p2, = par1.plot(PERC,  label="SOC")
 p2, = par1.plot(TEMP, label="Temperature")
-#p3 = host.plot(timeStamps, PERC)
+p3 = host.plot(timeStamps, PERC)
 
 
 host.set_xlim(0, (len(timeStamps) / xAxisScaler)) # X limit is contigent on the # of data points taken
@@ -178,7 +203,7 @@ par1.set_ylim(-25 , 100)
 
 
 plt.yticks(np.arange(-2000, 5000, 500))
-#plt.xticks(np.arange(0, (len(PERC) / xAxisScaler), 1000))
+plt.xticks(np.arange(0, (len(PERC) / xAxisScaler), 1000))
 plt.tick_params(axis='x', which='major', labelsize = 3)
 plt.xticks( rotation=25 )
 plt.title(chartTitle)
@@ -193,11 +218,37 @@ host.legend()
 host.axis["left"].label.set_color('black')
 par1.axis["right"].label.set_color('black')
 
+
+
+######################Call outs#####################33
+host.annotate("IBATT" + " "+str(BAT_CUR[sevenfiftymAindex])+"mA\nTIME: " + str(timeStamps[sevenfiftymAindex]), xy=(sevenfiftymAindex, 750),
+              xytext=(sevenfiftymAindex -2000, 750 + 1000),
+               arrowprops=dict(facecolor='BLUE', shrink=0.05),)
+host.annotate("IBATT" + " "+str(BAT_CUR[sixseventymAindex])+"mA\nTIME: " + str(timeStamps[sixseventymAindex]), xy=(sixseventymAindex, 670),
+              xytext=(sixseventymAindex, 670 + 1000),
+               arrowprops=dict(facecolor='BLUE', shrink=0.05),)
+host.annotate("IBATT" + " "+str(BAT_CUR[fivehundredmAindex])+"mA\nTIME: " + str(timeStamps[fivehundredmAindex]), xy=(fivehundredmAindex, 500),
+              xytext=(fivehundredmAindex, 500 + 1000),
+               arrowprops=dict(facecolor='BLUE', shrink=0.05),)
+host.annotate("IBATT" + " "+str(BAT_CUR[twofiftymAindex])+"mA\nTIME: " + str(timeStamps[twofiftymAindex]), xy=(twofiftymAindex, 250),
+              xytext=(twofiftymAindex-2000, 250 + 750),
+               arrowprops=dict(facecolor='BLUE', shrink=0.05),)
+
+
+
+
+########################saving########################
 plt.savefig(saveAs)
 plt.show()
 
 ############################################################Excel Part####################################################################3
 #this is the part where it places the parsed log into an excel workbook along with the chart.
+
+
+
+
+
+
 
 
 
